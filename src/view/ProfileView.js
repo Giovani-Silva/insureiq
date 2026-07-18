@@ -25,12 +25,26 @@ export class ProfileView {
 
     this.#el.querySelectorAll('.profile-card').forEach(card => {
       card.addEventListener('click', () => {
+        // Remove seleção anterior
+        this.#el.querySelectorAll('.profile-card').forEach(c => {
+          c.classList.remove('profile-card--selected', 'beam-border');
+        });
+
+        // Ativa beam border no card clicado
+        card.classList.add('profile-card--selected', 'beam-border');
+
         const id = Number(card.dataset.id);
         this.#onSelectCallback?.(id);
       });
     });
 
     this.#el.classList.remove('hidden');
+  }
+
+  clearSelection() {
+    this.#el.querySelectorAll('.profile-card').forEach(c => {
+      c.classList.remove('profile-card--selected', 'beam-border');
+    });
   }
 
   #renderCard(profile) {

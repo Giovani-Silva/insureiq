@@ -1,7 +1,7 @@
 import { workerEvents } from '../events/constants.js';
 
 export class ModelController {
-  #worker = null;
+  #worker    = null;
   #listeners = {};
 
   init() {
@@ -17,8 +17,13 @@ export class ModelController {
     return this;
   }
 
-  train() {
-    this.#worker.postMessage({ action: workerEvents.trainModel });
+  // config: { sampleSize, epochs }
+  train(config) {
+    this.#worker.postMessage({
+      action:     workerEvents.trainModel,
+      sampleSize: config.sampleSize,
+      epochs:     config.epochs,
+    });
   }
 
   classify(profile) {

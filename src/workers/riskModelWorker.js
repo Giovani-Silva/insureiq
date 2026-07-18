@@ -5,7 +5,7 @@ console.log('Risk model worker initialized');
 
 // ─── Estado global do worker ──────────────────────────────────────────────────
 let _model = null;
-let _meta  = null; // metadados do training-data.json (indexes, stats, dims)
+let _meta = null; // metadados do training-data.json (indexes, stats, dims)
 
 // ─── Normalização ─────────────────────────────────────────────────────────────
 // Mesma fórmula do curso: (val - min) / (max - min)
@@ -44,17 +44,17 @@ function encodeProfile(profile, meta) {
   const { stats, indexes } = meta;
 
   // ── Features contínuas normalizadas ──
-  const age        = normalize(profile.idade,                stats.age.min,                  stats.age.max);
-  const gender     = indexes.GENDER_INDEX[profile.genero] ?? 0;
-  const income     = normalize(profile.rendaMensal,          stats.incomeLevel.min,           stats.incomeLevel.max);
-  const claims     = normalize(profile.historicoSinistros,   stats.claimHistory.min,          stats.claimHistory.max);
-  const prevClaims = normalize(profile.sinistrosAnteriores,  stats.previousClaimHistory.min,  stats.previousClaimHistory.max);
-  const credit     = normalize(profile.creditScore,          stats.creditScore.min,           stats.creditScore.max);
+  const age = normalize(profile.idade, stats.age.min, stats.age.max);
+  const gender = indexes.GENDER_INDEX[profile.genero] ?? 0;
+  const income = normalize(profile.rendaMensal, stats.incomeLevel.min, stats.incomeLevel.max);
+  const claims = normalize(profile.historicoSinistros, stats.claimHistory.min, stats.claimHistory.max);
+  const prevClaims = normalize(profile.sinistrosAnteriores, stats.previousClaimHistory.min, stats.previousClaimHistory.max);
+  const credit = normalize(profile.creditScore, stats.creditScore.min, stats.creditScore.max);
 
   // ── Features categóricas (one-hot) ──
-  const drivingOH    = oneHot(indexes.DRIVING_RECORD_INDEX[profile.registroDirecao] ?? 0, 5);
-  const occupationOH = oneHot(indexes.OCCUPATION_INDEX[profile.ocupacao]             ?? 0, 9);
-  const educationOH  = oneHot(indexes.EDUCATION_INDEX[profile.educacao]              ?? 0, 5);
+  const drivingOH = oneHot(indexes.DRIVING_RECORD_INDEX[profile.registroDirecao] ?? 0, 5);
+  const occupationOH = oneHot(indexes.OCCUPATION_INDEX[profile.ocupacao] ?? 0, 9);
+  const educationOH = oneHot(indexes.EDUCATION_INDEX[profile.educacao] ?? 0, 5);
 
   return [
     age,
@@ -109,7 +109,7 @@ const exampleProfile = {
 // ====================================================================
 // 🧠 Configuração e treinamento da rede neural
 // ====================================================================
-async function configureAndTrain(inputs, labels, inputDimensions, numClasses) {
+async function configureAndTrain(inputs, labels, inputDimensions, numClasses, epochs = 50) {
   const model = tf.sequential();
 
   // Camada de entrada
@@ -158,7 +158,7 @@ async function configureAndTrain(inputs, labels, inputDimensions, numClasses) {
   const ys = tf.tensor2d(labels);
 
   await model.fit(xs, ys, {
-    epochs: 50,
+    epochs,
     batchSize: 64,
     shuffle: true,
     validationSplit: 0.1, // 10% dos dados para validação em tempo real
@@ -184,21 +184,27 @@ async function configureAndTrain(inputs, labels, inputDimensions, numClasses) {
 }
 
 // ─── Treina o modelo com o training-data.json ──────────────────────────────
-async function trainModel() {
+async function trainModel({ sampleSize, epochs = 50 }) {
   postMessage({ type: workerEvents.progressUpdate, progress: { progress: 10 } });
 
-  // Carrega os dados pré-processados gerados pelo convert-dataset.js
   const trainingData = await (await fetch('/data/training-data.json')).json();
   _meta = trainingData.meta;
 
+  // Subsampla se sampleSize for definido (modos Rápido e Médio)
+  let inputs = trainingData.inputs;
+  let labels = trainingData.labels;
+
+  if (sampleSize && sampleSize < inputs.length) {
+    const indices = Array.from({ length: inputs.length }, (_, i) => i)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, sampleSize);
+    inputs = indices.map(i => inputs[i]);
+    labels = indices.map(i => labels[i]);
+  }
+
   postMessage({ type: workerEvents.progressUpdate, progress: { progress: 30 } });
 
-  _model = await configureAndTrain(
-    trainingData.inputs,
-    trainingData.labels,
-    _meta.inputDimensions,
-    _meta.numClasses,
-  );
+  _model = await configureAndTrain(inputs, labels, _meta.inputDimensions, _meta.numClasses, epochs);
 
   postMessage({ type: workerEvents.progressUpdate, progress: { progress: 100 } });
   postMessage({ type: workerEvents.trainingComplete });
@@ -244,7 +250,7 @@ async function classifyRisk({ profile }) {
 
 // ─── Dispatcher de mensagens ──────────────────────────────────────────────
 const handlers = {
-  [workerEvents.trainModel]:   trainModel,
+  [workerEvents.trainModel]: trainModel,
   [workerEvents.classifyRisk]: classifyRisk,
 };
 
