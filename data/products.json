@@ -1,0 +1,62 @@
+[
+  {
+    "id": "policy1",
+    "nome": "Seguro Auto Essencial",
+    "categoria": "auto",
+    "descricao": "Cobertura básica contra colisão, roubo e danos a terceiros. Ideal para motoristas com histórico limpo.",
+    "coberturas": ["Colisão", "Roubo e furto", "Danos a terceiros"],
+    "franquia": "R$ 2.500",
+    "mensalidade": "R$ 189",
+    "riscoIdeal": [0, 1],
+    "destaque": false,
+    "icon": "🚗"
+  },
+  {
+    "id": "policy2",
+    "nome": "Seguro Auto Completo",
+    "categoria": "auto",
+    "descricao": "Cobertura ampla com assistência 24h, carro reserva e proteção contra eventos naturais.",
+    "coberturas": ["Colisão", "Roubo e furto", "Danos a terceiros", "Eventos naturais", "Carro reserva", "Assistência 24h"],
+    "franquia": "R$ 1.800",
+    "mensalidade": "R$ 340",
+    "riscoIdeal": [1, 2],
+    "destaque": true,
+    "icon": "🚘"
+  },
+  {
+    "id": "policy3",
+    "nome": "Seguro de Vida Premium",
+    "categoria": "vida",
+    "descricao": "Proteção financeira para sua família com cobertura por invalidez, doenças graves e morte.",
+    "coberturas": ["Morte natural", "Morte acidental", "Invalidez permanente", "Doenças graves"],
+    "franquia": "—",
+    "mensalidade": "R$ 95",
+    "riscoIdeal": [0, 1, 2],
+    "destaque": false,
+    "icon": "❤️"
+  },
+  {
+    "id": "policy4",
+    "nome": "Seguro Residencial",
+    "categoria": "residencial",
+    "descricao": "Proteção para seu imóvel contra incêndio, roubo, danos elétricos e responsabilidade civil.",
+    "coberturas": ["Incêndio", "Roubo de bens", "Danos elétricos", "Responsabilidade civil", "Vendaval"],
+    "franquia": "R$ 500",
+    "mensalidade": "R$ 75",
+    "riscoIdeal": [0, 1],
+    "destaque": false,
+    "icon": "🏠"
+  },
+  {
+    "id": "policy5",
+    "nome": "Seguro Alto Risco",
+    "categoria": "auto",
+    "descricao": "Produto especializado para perfis com histórico de sinistros ou ocorrências no trânsito. Cobertura ampla com franquia ajustada ao risco.",
+    "coberturas": ["Colisão", "Roubo e furto", "Danos a terceiros", "Assistência 24h"],
+    "franquia": "R$ 4.000",
+    "mensalidade": "R$ 620",
+    "riscoIdeal": [2, 3],
+    "destaque": false,
+    "icon": "🛡️"
+  }
+]

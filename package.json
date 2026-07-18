@@ -1,0 +1,18 @@
+{
+  "name": "insureiq",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Perfil de risco para seguros com TensorFlow.js",
+  "main": "index.js",
+  "scripts": {
+    "convert": "node scripts/convert-dataset.js",
+    "testTraining": "TF_CPP_MIN_LOG_LEVEL=2 node --no-deprecation scripts/test-training.js"
+  },
+  "keywords": ["insurance", "risk", "tensorflow", "ml"],
+  "author": "Giovani Silva",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "csv-parse": "^7.0.1"
+  }
+}

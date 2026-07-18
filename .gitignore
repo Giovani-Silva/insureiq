@@ -1,0 +1,15 @@
+# Dependências
+node_modules/
+
+# Dataset bruto — pesado demais e não é código
+data/data_synthetic.csv
+data/insurance_dataset.csv
+data/archive.zip
+
+# JSON gerado pelo script — regenerável com npm run convert
+data/training-data.json
+
+# Logs e ambiente
+*.log
+.env
+.DS_Store
