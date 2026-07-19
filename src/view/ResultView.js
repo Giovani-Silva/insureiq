@@ -57,7 +57,10 @@ export class ResultView {
     // ── Painel de resultado ──
     liveEl.innerHTML = `
       <div class="result-verdict">
-        <div class="verdict-label text-tertiary">Perfil de risco</div>
+        <div class="verdict-top-row">
+          <div class="verdict-label text-tertiary">Perfil de risco</div>
+          <button class="explain-btn" id="explain-btn">Explicar resultado</button>
+        </div>
         <div class="verdict-risk ${risk.color}">
           <span class="verdict-dot"></span>
           ${risk.label}
@@ -99,6 +102,16 @@ export class ResultView {
 
     // ── Network card ──
     this.#updateNetworkCard({ riskLevel, confidence, elapsed });
+
+    // ── Explain button ──
+    const _profile = this.#currentProfile;
+    const _risk    = riskLevel;
+    const _rec     = recommended;
+    requestAnimationFrame(() => {
+      document.getElementById('explain-btn')?.addEventListener('click', () => {
+        this.#showExplanation(_profile, _risk, _rec);
+      });
+    });
   }
 
   hide() {
@@ -432,5 +445,161 @@ export class ResultView {
     } else {
       run();
     }
+  }
+
+  // ── Calcula fatores de risco explicáveis ─────────────────────────────────
+  #computeRiskFactors(profile) {
+    const factors = [];
+
+    const drivingMap = {
+      'Clean':            { label: 'Limpo',           pts: 0 },
+      'Minor Violations': { label: 'Infrações leves', pts: 1 },
+      'Major Violations': { label: 'Infrações graves',pts: 2 },
+      'Accident':         { label: 'Acidente',        pts: 3 },
+      'DUI':              { label: 'DUI',             pts: 4 },
+    };
+    const drv = drivingMap[profile.registroDirecao] || { label: profile.registroDirecao, pts: 0 };
+    factors.push({ label: 'Histórico de direção', value: drv.label, pts: drv.pts, max: 4 });
+
+    let creditPts = 0, creditLabel = '';
+    if      (profile.creditScore >= 750) { creditPts = 0; creditLabel = 'Excelente (≥ 750)'; }
+    else if (profile.creditScore >= 650) { creditPts = 1; creditLabel = 'Bom (650–749)'; }
+    else if (profile.creditScore >= 580) { creditPts = 2; creditLabel = 'Regular (580–649)'; }
+    else                                 { creditPts = 3; creditLabel = 'Baixo (< 580)'; }
+    factors.push({ label: 'Score de crédito', value: creditLabel, pts: creditPts, max: 3 });
+
+    const c    = profile.historicoSinistros;
+    const cPts = c <= 0 ? 0 : c <= 2 ? 1 : c <= 4 ? 2 : 3;
+    factors.push({ label: 'Sinistros', value: c + ' ocorrência(s)', pts: cPts, max: 3 });
+
+    const pc    = profile.sinistrosAnteriores;
+    const pcPts = Math.min(pc, 3);
+    factors.push({ label: 'Sinistros anteriores', value: pc + ' ocorrência(s)', pts: pcPts, max: 3 });
+
+    const age    = profile.idade;
+    const agePts = age < 25 ? 2 : age > 65 ? 1 : 0;
+    const ageLbl = age < 25 ? age + ' anos (condutor jovem)' : age > 65 ? age + ' anos (condutor sênior)' : age + ' anos';
+    factors.push({ label: 'Idade', value: ageLbl, pts: agePts, max: 2 });
+
+    const total    = factors.reduce((s, f) => s + f.pts, 0);
+    const maxTotal = factors.reduce((s, f) => s + f.max, 0);
+    return { factors, total, maxTotal };
+  }
+
+  // ── Abre modal de explicação ──────────────────────────────────────────────
+  #showExplanation(profile, riskLevel, recommended) {
+    const { factors, total, maxTotal } = this.#computeRiskFactors(profile);
+    const risk = RISK_CONFIG[riskLevel];
+
+    const pctColor = (pts, max) => {
+      const r = pts / max;
+      if (r === 0)       return 'risk-low';
+      if (r <= 0.33)     return 'risk-medium-low';
+      if (r <= 0.66)     return 'risk-medium-high';
+      return 'risk-high';
+    };
+
+    const barWidth = (pts, max) => Math.round((pts / max) * 100);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'explain-overlay';
+    overlay.id = 'explain-overlay';
+
+    overlay.innerHTML = `
+      <div class="explain-modal">
+        <div class="explain-modal-header">
+          <div>
+            <div class="explain-modal-title">Como funciona</div>
+            <div class="explain-modal-sub text-tertiary">Explicação em linguagem simples</div>
+          </div>
+          <button class="explain-close" id="explain-close">✕</button>
+        </div>
+
+        <div class="explain-body">
+
+          <!-- Seção 1: O que é -->
+          <div class="explain-section">
+            <div class="explain-section-icon">🧠</div>
+            <div class="explain-section-content">
+              <div class="explain-section-title">O que é uma rede neural?</div>
+              <div class="explain-section-text">
+                Uma rede neural aprende padrões a partir de exemplos.
+                Mostramos 53.000 perfis de segurados reais, cada um com atributos como histórico de direção,
+                score de crédito e sinistros. A rede aprendeu sozinha quais combinações de atributos
+                estão associadas a cada nível de risco — sem que alguém programasse regras manualmente.
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção 2: Por que este resultado -->
+          <div class="explain-section">
+            <div class="explain-section-icon">📊</div>
+            <div class="explain-section-content">
+              <div class="explain-section-title">Por que ${profile.nome} é risco <span class="${risk.color}">${risk.label}</span>?</div>
+              <div class="explain-section-text">
+                Cada atributo do perfil contribui com uma pontuação. A soma define o nível de risco.
+              </div>
+
+              <div class="explain-factors">
+                ${factors.map(f => `
+                  <div class="explain-factor">
+                    <div class="factor-header">
+                      <span class="factor-label">${f.label}</span>
+                      <span class="factor-value text-secondary">${f.value}</span>
+                      <span class="factor-pts ${pctColor(f.pts, f.max)}">${f.pts > 0 ? '+' + f.pts : '—'}</span>
+                    </div>
+                    <div class="factor-bar-track">
+                      <div class="factor-bar-fill ${pctColor(f.pts, f.max)}-fill" style="width:${barWidth(f.pts, f.max)}%"></div>
+                    </div>
+                  </div>
+                `).join('')}
+
+                <div class="explain-total">
+                  <span class="text-tertiary">Pontuação total</span>
+                  <span class="explain-total-score ${risk.color}">${total} / ${maxTotal}</span>
+                </div>
+              </div>
+
+              <div class="explain-scale">
+                <div class="scale-item risk-low">0–3 Baixo</div>
+                <div class="scale-item risk-medium-low">4–6 Médio-Baixo</div>
+                <div class="scale-item risk-medium-high">7–9 Médio-Alto</div>
+                <div class="scale-item risk-high">10+ Alto</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção 3: Por que estes produtos -->
+          <div class="explain-section">
+            <div class="explain-section-icon">📦</div>
+            <div class="explain-section-content">
+              <div class="explain-section-title">Por que estes produtos foram recomendados?</div>
+              <div class="explain-section-text">
+                Cada produto de seguro tem um perfil de risco compatível.
+                Para risco <span class="${risk.color}">${risk.label}</span>,
+                selecionamos produtos com ${riskLevel >= 2 ? 'cobertura mais abrangente e franquias ajustadas ao maior nível de sinistralidade' : 'boa cobertura e franquias acessíveis para perfis de baixo risco'}.
+              </div>
+              <div class="explain-products">
+                ${recommended.map(p => `
+                  <div class="explain-product">
+                    <span class="explain-product-icon">${p.icon}</span>
+                    <div>
+                      <div class="explain-product-name">${p.nome}</div>
+                      <div class="explain-product-why text-tertiary">${p.descricao}</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('explain-close')?.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   }
 }
