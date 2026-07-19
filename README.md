@@ -6,6 +6,23 @@ Projeto desenvolvido como exercício prático da pós-graduação em Engenharia 
 
 ---
 
+## Screenshots
+
+| Velocidade de treino | Treinamento ao vivo |
+|---|---|
+| ![Velocidade](assets/velocidade-de-treinamento.png) | ![Treinamento](assets/treinamento.png) |
+
+| Seleção de perfis | Editor interativo |
+|---|---|
+| ![Perfis](assets/perfis-padrao.png) | ![Editor](assets/como-funciona.png) |
+
+![Recomendação](assets/recomendacao.png)
+
+---
+
+
+
+
 ## Como funciona
 
 O usuário escolhe a velocidade de treinamento e assiste a rede neural aprender em tempo real. Depois seleciona um perfil e edita seus atributos — direção, score de crédito, sinistros, idade — e vê o risco e os produtos recomendados atualizando instantaneamente. Todo o processamento acontece no browser via Web Worker, sem servidor de inferência e sem envio de dados para nenhuma API.
@@ -171,5 +188,5 @@ O vetor de entrada (25 dimensões) é composto por 6 features contínuas normali
 
 ## Autor
 
-**Giovani Silva** — Senior Frontend & Mobile Engineer  
+**Giovani Silva** — Senior Frontend & Mobile Engineer
 [linkedin.com/in/giovanisilva](https://www.linkedin.com/in/giovanisilva)

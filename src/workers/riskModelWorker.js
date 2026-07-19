@@ -250,9 +250,10 @@ async function classifyRisk({ profile }) {
 
 // ─── Dispatcher de mensagens ──────────────────────────────────────────────
 const handlers = {
-  [workerEvents.trainModel]: trainModel,
+  [workerEvents.trainModel]:   trainModel,
   [workerEvents.classifyRisk]: classifyRisk,
 };
+
 
 self.onmessage = (e) => {
   const { action, ...data } = e.data;

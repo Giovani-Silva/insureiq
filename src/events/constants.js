@@ -4,8 +4,8 @@ export const workerEvents = {
   classifyRisk: 'classifyRisk',
 
   // Worker → UI
-  trainingLog:     'trainingLog',
-  progressUpdate:  'progressUpdate',
-  trainingComplete:'trainingComplete',
-  riskResult:      'riskResult',
+  trainingLog:      'trainingLog',
+  progressUpdate:   'progressUpdate',
+  trainingComplete: 'trainingComplete',
+  riskResult:       'riskResult',
 };
