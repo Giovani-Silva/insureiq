@@ -27,34 +27,33 @@ async function init() {
       }, 1200);
     })
     .on(workerEvents.riskResult, (data) => {
-      // Atualiza só o painel de resultado — sem re-render do editor
       resultView.updateResult(data);
     });
 
   modelCtrl.init();
 
-  // Perfil selecionado → abre editor interativo
+  // Perfil selecionado na grid → abre editor interativo com todos os profiles
   profileCtrl.onSelect((profile) => {
     profileView.hide();
-    resultView.showEditor(profile);
+    resultView.showInteractive(profiles, profile);
   });
 
   profileView.onSelect((id) => {
     profileCtrl.select(id);
   });
 
-  // Editor dispara reclassificação com debounce interno
+  // Editor dispara reclassificação
   resultView.onClassify((profile) => {
     modelCtrl.classify(profile);
   });
 
-  // Voltar para seleção de perfil
+  // Voltar para a grade de perfis
   resultView.onBack(() => {
     resultView.hide();
     profileView.show(profiles);
   });
 
-  // Speed selector → inicia treinamento
+  // Speed selector → treino
   trainingView.onStart((config) => {
     trainingView.showProgress(config);
     modelCtrl.train(config);
